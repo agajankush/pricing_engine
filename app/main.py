@@ -25,7 +25,7 @@ def create_multiprocess_registry():
     multiprocess.MultiProcessCollector(registry)
     return registry
 
-@app.get('/metrics', reponse_class=PlainTextResponse, include_in_schema=False)
+@app.get('/metrics', response_class=PlainTextResponse, include_in_schema=False)
 def metrics():
     if os.environ.get("PROMETHEUS_MULTIPROC_DIR"):
         registry = create_multiprocess_registry()
