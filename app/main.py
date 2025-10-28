@@ -1,3 +1,4 @@
+from fcntl import FASYNC
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse, PlainTextResponse
 from app.routes import pricing
@@ -5,6 +6,9 @@ from app.core.config import settings
 from prometheus_client import generate_latest, CollectorRegistry, multiprocess
 from starlette.responses import PlainTextResponse
 import os
+from opentelemetry.instrumentation.redis import RedisInstrumentor
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from app.core.tracing import configure_tracer
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -12,6 +16,13 @@ app = FastAPI(
 )
 
 app.include_router(pricing.router, prefix="/api/v1")
+
+# OpenTelemetry Tracer Configuration    
+configure_tracer("pricing-api-service")
+# FastAPI Instrumentation
+FastAPIInstrumentor.instrument_app(app)
+# Redis Instrumentation
+RedisInstrumentor().instrument()
 
 # Adding the timing middleware on all the routes of the application
 if settings.ENABLE_METRICS:
