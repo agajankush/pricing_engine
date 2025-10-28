@@ -1,0 +1,40 @@
+
+
+services:
+  # 1. The message Broke / Cache
+  redis:
+    image: redis:7-alpine
+    container_name: redis_broker
+    ports:
+      - "6379:6379"
+    restart: always
+  
+  # 2. The Web API Service
+  api:
+    build: .
+    container_name: pricing_api
+    command: gunicorn app.main:app -c gunicorn_config.py
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+  
+  # 3. The Celery Worker
+  worker:
+    build: .
+    container_name: pricing_worker
+    command: python -m celery -A app.workers.celery_app worker --loglevel=INFO --pool=solo
+    volumes:
+      - .:/app
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+      - api
+
