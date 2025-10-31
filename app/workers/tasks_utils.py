@@ -1,6 +1,6 @@
 import time
 import random
-from typing import List, Doct, Any
+from typing import List
 
 def fetch_all_product_ids() -> List[str]:
     """

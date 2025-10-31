@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from fastapi.responses import ORJSONResponse
 import random
 from typing import Annotated
+from app.core.config import settings
 from app.services.cache import get_redis_client, get_cached_price, set_cached_price
 import redis.asyncio as redis
 import json
@@ -30,6 +31,23 @@ async def fetch_base_price(product_id: str) -> float:
 async def fetch_market_data(user_location: str) -> float:
     await asyncio.sleep(random.uniform(0.02, 0.04)) # Simulate slow external API call
     return 0.95
+
+# Building Event driven architecture
+# Publisher: FastAPI endpoint
+# This endpoint is a single point of entry got all the price calculations
+async def get_redis_publisher_client():
+    return redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
+
+@router.post("/publish-market-event")
+async def publish_market_event(client: RedisClient):
+    """
+    Simulates an external service publishing a market update event
+    This call is instantaneous and non-blocking
+    """
+    CHANNEL = "market_events"
+    await client.publish(CHANNEL, "Recalculate_Triggered_v1")
+    return {"status": "Event published", "channel": CHANNEL}
+
 
 @router.post("/price", response_class=ORJSONResponse)
 async def get_dynamic_price(request: PricingRequest, cache: RedisClient) -> PriceDetail:

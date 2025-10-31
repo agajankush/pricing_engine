@@ -47,3 +47,17 @@ services:
       - "4318:4318"
     environment:
       - COLLECTOR_OTLP_ENABLED=true
+  
+  # 5. The Pub/Sub Listener
+  listener:
+    build: .
+    container_name: pricing_listener
+    volumes:
+      - .:/app
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+    # This executes the Python script directly
+    command: ["python", "-m", "app.workers.listener"]
